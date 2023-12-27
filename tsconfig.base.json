@@ -1,0 +1,117 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": ".",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "strictPropertyInitialization": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "target": "es2015",
+    "module": "esnext",
+    "lib": [
+      "es2020",
+      "dom"
+    ],
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@app/components/subscriptions": [
+        "libs/components/subscriptions/src/index.ts"
+      ],
+      "@app/common/configuration": [
+        "libs/common/configuration/src/index.ts"
+      ],
+      "@app/common/dto": [
+        "libs/common/dto/src/index.ts"
+      ],
+      "@app/common/mail": [
+        "libs/common/mail/src/index.ts"
+      ],
+      "@app/common/prisma": [
+        "libs/common/prisma/src/index.ts"
+      ],
+      "@app/common/shared": [
+        "libs/common/shared/src/index.ts"
+      ],
+      "@app/common/storage": [
+        "libs/common/storage/src/index.ts"
+      ],
+      "@app/common/stripe": [
+        "libs/common/stripe/src/index.ts"
+      ],
+      "@app/common/types": [
+        "libs/common/types/src/index.ts"
+      ],
+      "@app/components/admin": [
+        "libs/components/admin/src/index.ts"
+      ],
+      "@app/components/art-classifications": [
+        "libs/components/art-classifications/src/index.ts"
+      ],
+      "@app/components/art-orientations": [
+        "libs/components/art-orientations/src/index.ts"
+      ],
+      "@app/components/auth": [
+        "libs/components/auth/src/index.ts"
+      ],
+      "@app/components/boost": [
+        "libs/components/boost/src/index.ts"
+      ],
+      "@app/components/chat": [
+        "libs/components/chat/src/index.ts"
+      ],
+      "@app/components/favorites": [
+        "libs/components/favorites/src/index.ts"
+      ],
+      "@app/components/files": [
+        "libs/components/files/src/index.ts"
+      ],
+      "@app/components/gallery-types": [
+        "libs/components/gallery-types/src/index.ts"
+      ],
+      "@app/components/google-maps": [
+        "libs/components/google-maps/src/index.ts"
+      ],
+      "@app/components/likes": [
+        "libs/components/likes/src/index.ts"
+      ],
+      "@app/components/limits": [
+        "libs/components/limits/src/index.ts"
+      ],
+      "@app/components/notifications": [
+        "libs/components/notifications/src/index.ts"
+      ],
+      "@app/components/presence": [
+        "libs/components/presence/src/index.ts"
+      ],
+      "@app/components/profile": [
+        "libs/components/profile/src/index.ts"
+      ],
+      "@app/components/user": [
+        "libs/components/user/src/index.ts"
+      ],
+      "@app/components/websocket": [
+        "libs/components/websocket/src/index.ts"
+      ],
+      "@app/components/wish-list": [
+        "libs/components/wish-list/src/index.ts"
+      ],
+      "@app/core/utils": [
+        "libs/core/utils/src/index.ts"
+      ],
+      "@app/prisma": [
+        "prisma/index.ts"
+      ]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    "tmp"
+  ]
+}

@@ -1,0 +1,564 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    Int                    @id @default(autoincrement())
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  name                  String                 @db.VarChar(30)
+  email                 String                 @unique @db.VarChar(255)
+  password              String?                @db.VarChar(255)
+  phoneNumber           String?                @db.VarChar(20)
+  isEmailVerified       Boolean                @default(false)
+  isPhoneVerified       Boolean                @default(false)
+  socialAccounts        SocialAccount[]
+  emailVerificationCode EmailVerificationCode?
+  profile               Profile?
+  refreshToken          RefreshToken?
+  userPhoto             UserPhoto[]
+  resetPasswordCode     ResetPasswordCode?
+  role                  Role                   @default(USER)
+  userSubscription      UserSubscription?
+  stripeCustomerId      String?                @unique @db.VarChar(255)
+  StripeSubscription    StripeSubscription[]
+  isTrialUsed           Boolean                @default(false)
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum EmailNotificationsRecieveType {
+  ALL
+  IMPORTANT
+  DISABLED
+}
+
+model ProfileSettings {
+  id                            Int                           @id @default(autoincrement())
+  emailNotificationsRecieveType EmailNotificationsRecieveType @default(ALL)
+  pushOnNewMessage              Boolean                       @default(true)
+  pushOnLikes                   Boolean                       @default(true)
+  pushOnAddedToFavorites        Boolean                       @default(true)
+  pushOnNewMatch                Boolean                       @default(true)
+  pushOnAppNews                 Boolean                       @default(true)
+  isLocationPreferenceAuto      Boolean                       @default(true)
+  isLocationAuto                Boolean                       @default(true)
+  lat                           Float?
+  lng                           Float?
+  cityPreference                String?                       @db.VarChar(255)
+  countryPreference             String?                       @db.VarChar(255)
+  distancePreference            Int                           @default(50)
+  profile                       Profile                       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId                     Int                           @unique
+}
+
+model SocialAccount {
+  id             Int          @id @default(autoincrement())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  provider       ProviderType
+  providerUserId String       @unique @db.VarChar(255)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int
+}
+
+enum ProviderType {
+  GOOGLE
+  APPLE
+  FACEBOOK
+}
+
+enum UserRole {
+  ARTIST
+  COLLECTOR
+  GALLERY
+  BANNED
+}
+
+model EmailVerificationCode {
+  id               Int      @id @default(autoincrement())
+  verificationCode String   @unique @db.VarChar(5)
+  expirationTime   DateTime @default(dbgenerated("NOW() + interval '15 minutes'"))
+  email            String?  @db.VarChar(255)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           Int      @unique
+}
+
+model ResetPasswordCode {
+  id                Int      @id @default(autoincrement())
+  resetPasswordCode String   @unique @db.VarChar(5)
+  expirationTime    DateTime @default(dbgenerated("NOW() + interval '15 minutes'"))
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            Int      @unique
+}
+
+enum PlanName {
+  STANDARD
+  PREMIUM
+}
+
+enum PlanLimitName {
+  LIKE
+  SUPER_LIKE
+  DIS_LIKE
+  FAVORITE
+  BOOST
+  REWIND
+  TOP_PICKS
+  DOUBLE_LIKE
+}
+
+model PlanLimits {
+  id     Int           @id @default(autoincrement())
+  limit  Int?
+  days   Int?
+  name   PlanLimitName
+  plan   PremiumPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId Int
+
+  @@unique([name, planId])
+}
+
+model PremiumPlan {
+  id               Int                @id @default(autoincrement())
+  planName         PlanName           @unique
+  durationDays     Int?
+  price            Decimal            @db.Decimal(10, 2)
+  planLimits       PlanLimits[]
+  UserSubscription UserSubscription[]
+}
+
+model UserSubscription {
+  id        Int         @id @default(autoincrement())
+  startDate DateTime    @default(now())
+  endDate   DateTime?
+  wasPaid   Boolean
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      PremiumPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  userId    Int         @unique()
+  planId    Int
+}
+
+model NotificationsTemplate {
+  id                 Int   @id @default(autoincrement())
+  emailNotifications Json?
+  pushNotifications  Json?
+}
+
+model RefreshToken {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  refreshToken String   @db.VarChar(255)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int      @unique
+}
+
+enum GenderType {
+  MALE
+  FEMALE
+  OTHER
+  NOT_SPECIFIED
+}
+
+model Profile {
+  id                          Int                           @id @default(autoincrement())
+  userId                      Int                           @unique
+  createdAt                   DateTime                      @default(now())
+  updatedAt                   DateTime                      @updatedAt
+  user                        User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  age                         Int?
+  gender                      GenderType?
+  birthdate                   DateTime?
+  aboutMe                     String?
+  registrationToken           String?                       @db.VarChar(255)
+  country                     String?                       @db.VarChar(50)
+  city                        String?                       @db.VarChar(50)
+  role                        UserRole
+  galleryName                 String?                       @db.VarChar(40)
+  profileDescription          String?
+  autoLocation                Boolean                       @default(true)
+  manualLocationCountry       String?                       @db.VarChar(50)
+  manualCity                  String?                       @db.VarChar(50)
+  isLookingForGallery         Boolean                       @default(false)
+  isLookingForArtist          Boolean                       @default(false)
+  isLookingForCollector       Boolean                       @default(false)
+  isTutorialShown             Boolean                       @default(false)
+  superLikeLimits             SuperLikeLimits?
+  rewindLimits                RewindLimits?
+  boostLimits                 BoostLimits?
+  boosts                      Boosts[]
+  favoriteLimits              FavoriteLimits?
+  profileClassifications      ProfileClassifications[]
+  profileGalleryTypes         ProfileGalleryTypes[]
+  profileArtOrientations      ProfileArtOrientations[]
+  likeLimits                  LikeLimits?
+  userUnLikes                 UnLikes[]                     @relation("user")
+  unLikedUser                 UnLikes[]                     @relation("unLikedUser")
+  userLikes                   Likes[]                       @relation("user")
+  likedUsers                  Likes[]                       @relation("likedUser")
+  userFavorites               Favorites[]                   @relation("user")
+  favoriteUsers               Favorites[]                   @relation("favoriteUser")
+  profiles                    Rewinds[]                     @relation("profile")
+  rewoundProfiles             Rewinds[]                     @relation("rewoundProfile")
+  superProfiles               SuperLikes[]                  @relation("superProfile")
+  superLikedProfiles          SuperLikes[]                  @relation("superLikedProfile")
+  GalleryClassificationFilter GalleryClassificationFilter[]
+  ArtistClassificationFilter  ArtistClassificationFilter[]
+  GalleryTypeFilter           GalleryTypeFilter[]
+  orientationFilters          Orientation[]
+  profileSettings             ProfileSettings?
+  TopPicksLimit               TopPicksLimit?
+  avatar                      Avatar?                       @relation(fields: [avatarId], references: [id])
+  avatarId                    Int?                          @unique
+  doubleLikeLimits            DoubleLikeLimits?
+  messages                    Message[]
+  profileNotifications        Notifications[]               @relation("profileNotifications")
+  ctxProfileNotifications     Notifications[]               @relation("ctxProfileNotifications")
+}
+
+model UnLikes {
+  id               Int      @id @default(autoincrement())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  unLikedProfileId Int
+  profileId        Int
+  profile          Profile  @relation("user", fields: [profileId], references: [id], onDelete: Cascade)
+  unLikedProfile   Profile  @relation("unLikedUser", fields: [unLikedProfileId], references: [id], onDelete: Cascade)
+  unLikeDate       DateTime @default(now())
+
+  @@unique([unLikedProfileId, profileId])
+}
+
+model Likes {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  likedProfileId Int
+  profileId      Int
+  profile        Profile  @relation("user", fields: [profileId], references: [id], onDelete: Cascade)
+  likedProfile   Profile  @relation("likedUser", fields: [likedProfileId], references: [id], onDelete: Cascade)
+  viewed         Boolean  @default(false)
+  expirationDate DateTime
+
+  @@unique([profileId, likedProfileId])
+}
+
+model Favorites {
+  id                Int      @id @default(autoincrement())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  favoriteProfileId Int
+  profileId         Int
+  profile           Profile  @relation("user", fields: [profileId], references: [id], onDelete: Cascade)
+  favoriteProfile   Profile  @relation("favoriteUser", fields: [favoriteProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, favoriteProfileId])
+}
+
+enum ActionType {
+  LIKE
+  SUPER_LIKE
+  UNLIKE
+}
+
+model Rewinds {
+  id               Int        @id @default(autoincrement())
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  rewoundProfileId Int
+  profileId        Int
+  profile          Profile    @relation("profile", fields: [profileId], references: [id], onDelete: Cascade)
+  rewoundProfile   Profile    @relation("rewoundProfile", fields: [rewoundProfileId], references: [id], onDelete: Cascade)
+  actionType       ActionType
+}
+
+model SuperLikeLimits {
+  id                  Int       @id @default(autoincrement())
+  profileId           Int       @unique
+  profile             Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  remainingSuperLikes Int?
+  resetDate           DateTime?
+}
+
+model SuperLikes {
+  id                  Int      @id @default(autoincrement())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  profileId           Int
+  superLikedProfileId Int
+  superProfile        Profile  @relation("superProfile", fields: [profileId], references: [id], onDelete: Cascade)
+  superLikedProfile   Profile  @relation("superLikedProfile", fields: [superLikedProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([superLikedProfileId, profileId])
+}
+
+enum NotificationType {
+  LIKE
+  FAVORITE
+  MATCH
+  LIMIT_RENEW
+  NEW_MESSAGE
+  CHAT_DELETED
+  SUPER_LIKE
+}
+
+model Notifications {
+  id                Int              @id @default(autoincrement())
+  createdAt         DateTime         @default(now())
+  profileId         Int
+  profile           Profile          @relation(name: "profileNotifications", fields: [profileId], references: [id], onDelete: Cascade)
+  ctxProfileId      Int
+  ctxProfile        Profile          @relation(name: "ctxProfileNotifications", fields: [ctxProfileId], references: [id], onDelete: Cascade)
+  ctxProfileName    String?          @db.VarChar(30)
+  ctxProfileType    UserRole?
+  ctxProfilePhotoId Int?
+  message           String
+  notificationType  NotificationType
+  isRead            Boolean          @default(false)
+}
+
+model RewindLimits {
+  id               Int       @id @default(autoincrement())
+  profileId        Int       @unique
+  profile          Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  remainingRewinds Int?
+  resetDate        DateTime?
+}
+
+model BoostLimits {
+  id              Int       @id @default(autoincrement())
+  profileId       Int       @unique
+  profile         Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  remainingBoosts Int?
+  resetDate       DateTime?
+}
+
+model Boosts {
+  id        Int      @id @default(autoincrement())
+  profileId Int
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  startTime DateTime @default(now())
+  endTime   DateTime @default(dbgenerated("NOW() + interval '30 minutes'"))
+}
+
+model FavoriteLimits {
+  id                 Int       @id @default(autoincrement())
+  profileId          Int       @unique
+  profile            Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  remainingFavorites Int?
+  resetDate          DateTime?
+}
+
+model Classifications {
+  id                          Int                           @id @default(autoincrement())
+  classificationName          String                        @unique @db.VarChar(255)
+  profileClassifications      ProfileClassifications[]
+  GalleryClassificationFilter GalleryClassificationFilter[]
+  ArtistClassificationFilter  ArtistClassificationFilter[]
+}
+
+model ProfileClassifications {
+  id               Int             @id @default(autoincrement())
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  profileId        Int
+  profile          Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  classificationId Int
+  classification   Classifications @relation(fields: [classificationId], references: [id], onDelete: Cascade)
+}
+
+model GalleryTypes {
+  id                  Int                   @id @default(autoincrement())
+  typeName            String                @unique @db.VarChar(255)
+  profileGalleryTypes ProfileGalleryTypes[]
+  GalleryTypeFilter   GalleryTypeFilter[]
+}
+
+model ProfileGalleryTypes {
+  id           Int          @id @default(autoincrement())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  profileId    Int
+  profile      Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  typeId       Int
+  galleryTypes GalleryTypes @relation(fields: [typeId], references: [id], onDelete: Cascade)
+}
+
+model ArtOrientations {
+  id                     Int                      @id @default(autoincrement())
+  orientationName        String                   @unique @db.VarChar(255)
+  profileArtOrientations ProfileArtOrientations[]
+  orientationFilters     Orientation[]
+}
+
+model ProfileArtOrientations {
+  id            Int             @id @default(autoincrement())
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  profileId     Int
+  profile       Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  orientationId Int
+  orientations  ArtOrientations @relation(fields: [orientationId], references: [id], onDelete: Cascade)
+}
+
+model LikeLimits {
+  id             Int       @id @default(autoincrement())
+  profileId      Int       @unique
+  profile        Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  remainingLikes Int?
+  resetDate      DateTime?
+}
+
+model DoubleLikeLimits {
+  id                   Int       @id @default(autoincrement())
+  profileId            Int       @unique
+  profile              Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  remainingDoubleLikes Int?
+  resetDate            DateTime?
+}
+
+model TopPicksLimit {
+  id             Int       @id @default(autoincrement())
+  profileId      Int       @unique
+  profile        Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  remainingPicks Int?
+  resetDate      DateTime?
+}
+
+model GalleryClassificationFilter {
+  id               Int             @id @default(autoincrement())
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  profileId        Int
+  profile          Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  classificationId Int
+  classification   Classifications @relation(fields: [classificationId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, classificationId])
+}
+
+model ArtistClassificationFilter {
+  id               Int             @id @default(autoincrement())
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  profileId        Int
+  profile          Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  classificationId Int
+  classification   Classifications @relation(fields: [classificationId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, classificationId])
+}
+
+model GalleryTypeFilter {
+  id            Int          @id @default(autoincrement())
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  profileId     Int
+  profile       Profile      @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  galleryTypeId Int
+  galleryTypes  GalleryTypes @relation(fields: [galleryTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, galleryTypeId])
+}
+
+model Orientation {
+  id                Int             @id @default(autoincrement())
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  profileId         Int
+  profive           Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  artOrientationsId Int
+  artOrientations   ArtOrientations @relation(fields: [artOrientationsId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, artOrientationsId])
+}
+
+model ApplicationSettings {
+  id                           Int  @id @default(autoincrement())
+  likeExpirationDays           Int
+  unLikeExpirationDays         Int
+  boostExpirationMinutes       Int
+  classificationsLimits        Int?
+  classificationsPremiumLimits Int?
+  premiumTrialDays             Int?
+}
+
+model Room {
+  id       Int             @id @default(autoincrement())
+  members  MembersOnRooms?
+  messages Message[]
+}
+
+model MembersOnRooms {
+  id       Int   @id @default(autoincrement())
+  room     Room  @relation(fields: [roomId], references: [id])
+  roomId   Int   @unique
+  memberId Int[] @unique
+}
+
+model Message {
+  id           Int                @id @default(autoincrement())
+  createdAt    DateTime           @default(now())
+  content      String?            @db.VarChar(255)
+  isRead       Boolean            @default(false)
+  author       Profile            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId     Int
+  room         Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId       Int
+  attachment   MessageAttachment? @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+  attachmentId Int?               @unique
+}
+
+model UserPhoto {
+  id       Int    @id @default(autoincrement())
+  name     String @unique @db.VarChar(255)
+  mimetype String @db.VarChar(255)
+  order    Int
+  user     User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int?
+}
+
+model Avatar {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique @db.VarChar(255)
+  mimetype String   @db.VarChar(255)
+  profile  Profile?
+}
+
+model MessageAttachment {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique @db.VarChar(255)
+  mimetype String   @db.VarChar(255)
+  message  Message?
+}
+
+model StripeEvent {
+  id            Int    @id @default(autoincrement())
+  stripeEventId String @unique @db.VarChar(255)
+}
+
+model StripeSubscription {
+  id                   Int                      @id @default(autoincrement())
+  stripeSubscriptionId String                   @unique @db.VarChar(255)
+  status               StripeSubscriptionStatus @default(PENDING)
+  userId               Int
+  user                 User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum StripeSubscriptionStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+}

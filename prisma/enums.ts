@@ -1,0 +1,29 @@
+export enum UserRole {
+  GALLERY = 'GALLERY',
+  ARTIST = 'ARTIST',
+  COLLECTOR = 'COLLECTOR',
+}
+
+export enum AccountTypesEnum {
+  STANDARD_PLAN = 'STANDARD_PLAN ',
+  PREMIUM_PLAN = 'PREMIUM_PLAN ',
+}
+
+export enum GenderTypeEnum {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+  OTHER = 'OTHER',
+  NOT_SPECIFIED = 'NOT_SPECIFIED',
+}
+
+export enum ActionType {
+  LIKE = 'LIKE',
+  SUPER_LIKE = 'SUPER_LIKE',
+  UNLIKE = 'UNLIKE',
+}
+
+export enum ConstantsName {
+  LIKES_EXPIRATION_DAYS = 'LIKES_EXPIRATION_DAYS',
+  DISLIKE_EXPIRATION_DAYS = 'DISLIKE_EXPIRATION_DAYS',
+  BOOST_EXPIRATION_MINUTES = 'BOOST_EXPIRATION_MINUTES',
+}
